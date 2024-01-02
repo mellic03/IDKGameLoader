@@ -1,11 +1,11 @@
 #include <libidk/idk_platform.hpp>
 
-#include <IDKengine/IDKengine.hpp>
-#include <IDKengine/idk_engine_api.hpp>
+#include <IDKGameEngine/IDKengine.hpp>
+#include <IDKGameEngine/idk_engine_api.hpp>
 
-#include <IDKengine/IDKthreading/idk_threadpool.hpp>
-#include <IDKengine/IDKmodules/idk_game.hpp>
-#include <IDKengine/idk_api_loader.hpp>
+#include <IDKGameEngine/IDKthreading/idk_threadpool.hpp>
+#include <IDKGameEngine/IDKmodules/idk_game.hpp>
+#include <IDKGameEngine/idk_api_loader.hpp>
 
 
 class idk::internal::ThreadPoolAPI

@@ -44,6 +44,6 @@ target_link_libraries(
     SDL2_mixer
     ${OPENGL_LIBRARIES}
 
-    idk
+    libidk
     IDKGameEngine
 )
