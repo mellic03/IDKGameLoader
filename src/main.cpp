@@ -44,14 +44,10 @@ using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 int IDK_ENTRY( int argc, char **argv )
 {
-
     // Load game code
     // -----------------------------------------------------------------------------------------
     idk::GenericAPILoader looder("IDKGE/runtime/libgame");
     idk::Game *game = looder.getAPI<idk::Game>("getInstance");
-
-    // idk::GameHandle handle("IDKGE/runtime/libgame");
-    // idk::Game *game = handle.getInstance();
 
     const char *window_title = game->name().c_str();
     // -----------------------------------------------------------------------------------------
@@ -59,7 +55,7 @@ int IDK_ENTRY( int argc, char **argv )
 
     // Load engine code
     // -----------------------------------------------------------------------------------------
-    idk::APILoader loader("IDKGE/runtime/libIDKengine");
+    idk::APILoader loader("IDKGE/runtime/libIDKGameEngine");
     idk::EngineAPI &api = loader.getEngineAPI(window_title);
 
     auto &engine     = api.getEngine();
