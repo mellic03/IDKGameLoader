@@ -17,3 +17,6 @@ cd build/CMake
 cmake -G Ninja ../../
 ninja -j 12
 # ----------------------------------------------------------------------------------------------
+
+cd ../../
+cp ./build/IDKGameLoader ../NewIDKGame/output/IDKGameLoader

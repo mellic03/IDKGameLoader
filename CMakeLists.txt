@@ -1,19 +1,18 @@
 cmake_minimum_required(VERSION 3.9)
+project(IDKGameLoader)
+
 
 set(CMAKE_BUILD_PARALLEL_LEVEL 8)
 set(CMAKE_CXX_FLAGS "-std=c++17 -Wuninitialized -Winit-self -Wmaybe-uninitialized -Werror -fsanitize=undefined -fdiagnostics-color=always -lstdc++fs")
-add_compile_options("-g" "-fno-ident" "-fno-asynchronous-unwind-tables")
+add_compile_options("-g" "-rdynamic" "-fno-ident" "-fno-asynchronous-unwind-tables")
 add_definitions(-DIDK_DEBUG)
 
-project(IDKGameLoader)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
 
 include_directories(${CMAKE_SOURCE_DIR}/external/include/)
 
 file(GLOB SOURCES
     "src/*.cpp"
 )
-
 
 
 # Non-IDK dependencies
@@ -45,6 +44,6 @@ target_link_libraries(
     SDL2_mixer
     ${OPENGL_LIBRARIES}
 
-    ${CMAKE_SOURCE_DIR}/external/lib/libidk.so
-    ${CMAKE_SOURCE_DIR}/external/lib/libIDKengine.so
+    idk
+    IDKGameEngine
 )

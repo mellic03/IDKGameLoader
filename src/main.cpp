@@ -5,7 +5,7 @@
 
 #include <IDKengine/IDKthreading/idk_threadpool.hpp>
 #include <IDKengine/IDKmodules/idk_game.hpp>
-
+#include <IDKengine/idk_api_loader.hpp>
 
 
 class idk::internal::ThreadPoolAPI
@@ -17,6 +17,11 @@ public:
 class idk::internal::EngineAPI
 {
 public:
+    static void setAPIptr( idk::Engine &engine, idk::EngineAPI *api )
+    {
+        engine.APIptr = api;
+    };
+
     static void initModules( idk::Engine &engine )
     {
         engine._idk_modules_init();
@@ -33,45 +38,54 @@ public:
     };
 };
 
-using namespace idk::internal;
-
+using internal_EngineAPI = idk::internal::EngineAPI;
+using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 
 int IDK_ENTRY( int argc, char **argv )
 {
-    // Load engine code
-    // -----------------------------------------------------------------------------------------
-    idk::APILoader loader("IDKGE/runtime/libIDKengine");
-    idk::EngineAPI *api = loader.getEngineAPI();
-
-    auto &engine = api->getEngine();
-    auto &ren    = api->getRenderer();
-    // -----------------------------------------------------------------------------------------
-
 
     // Load game code
     // -----------------------------------------------------------------------------------------
-    idk::GameHandle handle("IDKGE/runtime/libgame");
-    idk::Game *game = handle.getInstance();
-    std::cout << "game->name(): " << game->name() << "\n";
+    idk::GenericAPILoader looder("IDKGE/runtime/libgame");
+    idk::Game *game = looder.getAPI<idk::Game>("getInstance");
+
+    // idk::GameHandle handle("IDKGE/runtime/libgame");
+    // idk::Game *game = handle.getInstance();
+
+    const char *window_title = game->name().c_str();
     // -----------------------------------------------------------------------------------------
 
 
-    // Engine loop
+    // Load engine code
     // -----------------------------------------------------------------------------------------
-    game->registerModules(engine);
-    EngineAPI::initModules(engine);
+    idk::APILoader loader("IDKGE/runtime/libIDKengine");
+    idk::EngineAPI &api = loader.getEngineAPI(window_title);
 
-    game->setup(engine, ren);
+    auto &engine     = api.getEngine();
+    auto &ren        = api.getRenderer();
+    auto &threadpool = api.getThreadPool();
+    internal_EngineAPI::setAPIptr(engine, &api);
+    // -----------------------------------------------------------------------------------------
 
+
+    // Setup
+    // -----------------------------------------------------------------------------------------
+    game->registerModules(api);
+    internal_EngineAPI::initModules(engine);
+    game->setup(api);
+    // -----------------------------------------------------------------------------------------
+
+
+    // Main loop
+    // -----------------------------------------------------------------------------------------
     while (engine.running())
     {
-        game->mainloop(engine, ren);
+        game->mainloop(api);
 
-        EngineAPI::beginFrame(engine, ren);
-        EngineAPI::endFrame(engine, ren);
-
-        // ThreadPoolAPI::update(threadpool);
+        internal_EngineAPI::beginFrame(engine, ren);
+        internal_EngineAPI::endFrame(engine, ren);
+        internal_ThreadAPI::update(threadpool);
     }
     // -----------------------------------------------------------------------------------------
 

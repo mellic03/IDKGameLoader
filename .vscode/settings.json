@@ -84,7 +84,8 @@
         "thread": "cpp",
         "__mutex_base": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__errc": "cpp"
     },
     "C_Cpp.default.includePath": [
         "${default}",
