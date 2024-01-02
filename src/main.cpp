@@ -1,11 +1,12 @@
 #include <libidk/idk_platform.hpp>
+#include <libidk/idk_api_loader.hpp>
 
 #include <IDKGameEngine/IDKengine.hpp>
 #include <IDKGameEngine/idk_engine_api.hpp>
 
 #include <IDKGameEngine/IDKthreading/idk_threadpool.hpp>
 #include <IDKGameEngine/IDKmodules/idk_game.hpp>
-#include <IDKGameEngine/idk_api_loader.hpp>
+
 
 
 class idk::internal::ThreadPoolAPI
@@ -42,12 +43,15 @@ using internal_EngineAPI = idk::internal::EngineAPI;
 using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 
+typedef idk::EngineAPI *(*fnptr)( const char * );
+
+
 int IDK_ENTRY( int argc, char **argv )
 {
     // Load game code
     // -----------------------------------------------------------------------------------------
-    idk::GenericAPILoader looder("IDKGE/runtime/libgame");
-    idk::Game *game = looder.getAPI<idk::Game>("getInstance");
+    idk::APILoader looder("IDKGE/runtime/libgame");
+    idk::Game *game = looder.function_call<idk::Game>("getInstance");
 
     const char *window_title = game->name().c_str();
     // -----------------------------------------------------------------------------------------
@@ -56,7 +60,7 @@ int IDK_ENTRY( int argc, char **argv )
     // Load engine code
     // -----------------------------------------------------------------------------------------
     idk::APILoader loader("IDKGE/runtime/libIDKGameEngine");
-    idk::EngineAPI &api = loader.getEngineAPI(window_title);
+    idk::EngineAPI &api = *loader.function_call<idk::EngineAPI>("idk_export_getEngineAPI", window_title);
 
     auto &engine     = api.getEngine();
     auto &ren        = api.getRenderer();
