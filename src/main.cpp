@@ -43,8 +43,6 @@ using internal_EngineAPI = idk::internal::EngineAPI;
 using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 
-typedef idk::EngineAPI *(*fnptr)( const char * );
-
 
 int IDK_ENTRY( int argc, char **argv )
 {
