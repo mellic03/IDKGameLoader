@@ -1,11 +1,15 @@
 #include <libidk/idk_platform.hpp>
 #include <libidk/idk_api_loader.hpp>
+#include <libidk/idk_module.hpp>
+#include <libidk/idk_game.hpp>
+
 
 #include <IDKGameEngine/IDKengine.hpp>
+#include <IDKBuiltinCS/IDKBuiltinCS.hpp>
+
 #include <IDKGameEngine/idk_engine_api.hpp>
 
 #include <IDKGameEngine/IDKthreading/idk_threadpool.hpp>
-#include <IDKGameEngine/IDKmodules/idk_game.hpp>
 
 
 
@@ -43,13 +47,12 @@ using internal_EngineAPI = idk::internal::EngineAPI;
 using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 
-
 int IDK_ENTRY( int argc, char **argv )
 {
     // Load game code
     // -----------------------------------------------------------------------------------------
     idk::APILoader looder("IDKGE/runtime/libgame");
-    idk::Game *game = looder.function_call<idk::Game>("getInstance");
+    idk::Game *game = looder.call<idk::Game>("getInstance");
 
     const char *window_title = game->name().c_str();
     // -----------------------------------------------------------------------------------------
@@ -58,7 +61,7 @@ int IDK_ENTRY( int argc, char **argv )
     // Load engine code
     // -----------------------------------------------------------------------------------------
     idk::APILoader loader("IDKGE/runtime/libIDKGameEngine");
-    idk::EngineAPI &api = *loader.function_call<idk::EngineAPI>("idk_export_getEngineAPI", window_title);
+    idk::EngineAPI &api = *loader.call<idk::EngineAPI>("getInstance", window_title);
 
     auto &engine     = api.getEngine();
     auto &ren        = api.getRenderer();
@@ -67,10 +70,30 @@ int IDK_ENTRY( int argc, char **argv )
     // -----------------------------------------------------------------------------------------
 
 
+    // Load builtin component systems
+    // -----------------------------------------------------------------------------------------
+    engine.registerCS<idk::Name_CS>("Name");
+    engine.registerCS<idk::Icon_CS>("Icon");
+    engine.registerCS<idk::Transform_CS>("Transform");
+    engine.registerCS<idk::Model_CS>("Model");
+    engine.registerCS<idk::Camera_CS>("Camera");
+    // -----------------------------------------------------------------------------------------
+
+
+    // Load EditorUI
+    // -----------------------------------------------------------------------------------------
+    engine.registerModule("EditorUI", "IDKGE/runtime/libIDKEditorUI");
+    // -----------------------------------------------------------------------------------------
+
+
     // Setup
     // -----------------------------------------------------------------------------------------
     game->registerModules(api);
     internal_EngineAPI::initModules(engine);
+
+    int root_obj = engine.createGameObject("Root");
+    // engine.giveComponent<idk::Transform_CS>(root_obj);
+
     game->setup(api);
     // -----------------------------------------------------------------------------------------
 

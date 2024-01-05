@@ -47,5 +47,6 @@ target_link_libraries(
     ${OPENGL_LIBRARIES}
 
     libidk
+    IDKRenderEngine
     IDKGameEngine
 )
