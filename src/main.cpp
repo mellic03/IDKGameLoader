@@ -47,13 +47,13 @@ using internal_EngineAPI = idk::internal::EngineAPI;
 using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
 
 
+
 int IDK_ENTRY( int argc, char **argv )
 {
     // Load game code
     // -----------------------------------------------------------------------------------------
     idk::APILoader looder("IDKGE/runtime/libgame");
     idk::Game *game = looder.call<idk::Game>("getInstance");
-
     const char *window_title = game->name().c_str();
     // -----------------------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ int IDK_ENTRY( int argc, char **argv )
 
     // Load builtin component systems
     // -----------------------------------------------------------------------------------------
-    engine.registerCS<idk::Name_CS>("Name");
+    // engine.registerCS<idk::Name_CS>("Name");
     engine.registerCS<idk::Icon_CS>("Icon");
     engine.registerCS<idk::Transform_CS>("Transform");
     engine.registerCS<idk::Model_CS>("Model");
@@ -80,9 +80,17 @@ int IDK_ENTRY( int argc, char **argv )
     // -----------------------------------------------------------------------------------------
 
 
-    // Load EditorUI
+    // Load modules specified in loadlist.txt
     // -----------------------------------------------------------------------------------------
-    engine.registerModule("EditorUI", "IDKGE/runtime/libIDKEditorUI");
+    std::ifstream stream("IDKGE/runtime/loadlist.txt");
+    std::string line;
+
+    while (std::getline(stream, line))
+    {
+        engine.registerModule(line.substr(3), "IDKGE/runtime/" + line);  
+    }
+
+    stream.close();
     // -----------------------------------------------------------------------------------------
 
 
@@ -91,8 +99,7 @@ int IDK_ENTRY( int argc, char **argv )
     game->registerModules(api);
     internal_EngineAPI::initModules(engine);
 
-    int root_obj = engine.createGameObject("Root");
-    // engine.giveComponent<idk::Transform_CS>(root_obj);
+    engine.createGameObject("scene");
 
     game->setup(api);
     // -----------------------------------------------------------------------------------------
