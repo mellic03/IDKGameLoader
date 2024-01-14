@@ -5,21 +5,15 @@
 #include <libidk/idk_cppscript.hpp>
 
 #include <IDKGameEngine/IDKengine.hpp>
+#include <IDKEvents/IDKEvents.hpp>
+
 #include <IDKBuiltinCS/IDKBuiltinCS.hpp>
 #include <IDKBuiltinUI/EditorUI.hpp>
 
 #include <IDKGameEngine/idk_engine_api.hpp>
-#include <IDKGameEngine/IDKthreading/idk_threadpool.hpp>
+#include <IDKThreading/IDKThreading.hpp>
 
-
-
-class idk::internal::ThreadPoolAPI
-{
-public:
-    static void update ( idk::ThreadPool &threadpool ) { threadpool._update(); };
-};
-
-using internal_ThreadAPI = idk::internal::ThreadPoolAPI;
+#include <filesystem>
 
 
 
@@ -29,7 +23,6 @@ int IDK_ENTRY( int argc, char **argv )
     // -----------------------------------------------------------------------------------------
     idk::APILoader libgame("IDKGE/runtime/libgame");
     idk::Game *game = libgame.call<idk::Game>("getInstance");
-    std::cout << "window_title: " << game->name() << "\n";
     // -----------------------------------------------------------------------------------------
 
 
@@ -38,11 +31,29 @@ int IDK_ENTRY( int argc, char **argv )
     idk::APILoader libengine("IDKGE/runtime/libIDKGameEngine");
     idk::EngineAPI &api = *libengine.call<idk::EngineAPI>("getInstance", game->name());
 
+    auto &eventsys   = api.getEventSys();
+    auto &audiosys   = api.getAudioSys();
     auto &engine     = api.getEngine();
-    engine.APIptr    = &api;
-
     auto &ren        = api.getRenderer();
     auto &threadpool = api.getThreadPool();
+    // -----------------------------------------------------------------------------------------
+
+
+    // Setup resize and exit callbacks
+    // -----------------------------------------------------------------------------------------
+    auto resize_lambda = [&ren, &eventsys]()
+    {
+        auto winsize = eventsys.windowSize();
+        ren.resize(winsize.x, winsize.y);
+    };
+
+    auto exit_lambda = [&engine]()
+    {
+        engine.shutdown();
+    };
+
+    eventsys.onWindowEvent(idk::WindowEvent::RESIZE, resize_lambda);
+    eventsys.onWindowEvent(idk::WindowEvent::EXIT,   exit_lambda);
     // -----------------------------------------------------------------------------------------
 
 
@@ -57,43 +68,44 @@ int IDK_ENTRY( int argc, char **argv )
     // -----------------------------------------------------------------------------------------
 
 
-    // Load modules specified in loadlist.txt
+    // Load modules from IDKGE/runtime/modules/
     // -----------------------------------------------------------------------------------------
-    std::ifstream stream("IDKGE/runtime/loadlist.txt");
-    std::string line;
+    std::filesystem::directory_iterator d_iter("IDKGE/runtime/modules/");
 
-    while (std::getline(stream, line))
+    for (auto dir: d_iter)
     {
-        engine.registerModule(line.substr(3), "IDKGE/runtime/" + line);
+        std::string name = dir.path().stem();
+        std::string path = dir.path();
+        engine.registerModule(name, path);
     }
-
-    stream.close();
     // -----------------------------------------------------------------------------------------
-
-
-    idk::RuntimeScript script("./script.cpp");
-    script.execute(api);
 
 
     // Setup
     // -----------------------------------------------------------------------------------------
     game->registerModules(api);
-    engine.initModules();
+    engine.initModules(api);
     engine.createGameObject("scene");
     game->setup(api);
     // -----------------------------------------------------------------------------------------
 
     // auto mh = ren.modelAllocator().loadModel("./area.idkvi");
+    // idk::RuntimeScript script("./assets/cppscripts/script.cpp");
+    // script.execute(api);
 
     // Main loop
     // -----------------------------------------------------------------------------------------
     while (engine.running())
     {
-        engine.beginFrame(ren);
-        engine.endFrame(ren);
+        eventsys.processKeyInput();
+        eventsys.processMouseInput();
+        eventsys.update();
+
+        engine.beginFrame(api);
+        engine.endFrame(api);
         game->mainloop(api);
 
-        internal_ThreadAPI::update(threadpool);
+        threadpool._update();
     }
     // -----------------------------------------------------------------------------------------
 
