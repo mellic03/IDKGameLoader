@@ -49,6 +49,10 @@ target_link_libraries(
     libidk
     IDKGraphics
     IDKGameEngine
+)
 
-    IDKBuiltin
+
+file(
+    COPY ${CMAKE_CURRENT_SOURCE_DIR}/IDKGE/
+    DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/IDKGE/
 )
