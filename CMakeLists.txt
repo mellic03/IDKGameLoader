@@ -26,18 +26,6 @@ include_directories(${SDL2_mixer_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set_target_properties(
-    ${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 17
-)
-
-# if(MSVC)
-#     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
-# else()
-#     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-# endif()
-
-
 target_link_libraries(
     ${PROJECT_NAME} PUBLIC
     GLEW
@@ -46,7 +34,6 @@ target_link_libraries(
     SDL2_mixer
     ${OPENGL_LIBRARIES}
 
-    libidk
     IDKGraphics
     IDKGameEngine
 )
