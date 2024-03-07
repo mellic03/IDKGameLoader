@@ -20,6 +20,25 @@
 
 
 
+
+/*
+    WHAT TO DO:
+
+    1. You are making an FPS game with similar mechanics to half-life.
+        - Must implement quake style FPS camera fully in Lua.
+
+    STORY:
+        - Intro is basically the same as "Hole in The Ground".
+        - MC rushes home for the bathoom, finds a gaping hole where the toilet is supposed to be.
+          They really need to pee, so they venture into the hole in search of the toilet.
+        - Underneath the toilet is just the normal world.
+        - Sad scene occurs where the toilet is found broken, the MC anguishes upon
+          realising they will never pee again.
+
+*/
+
+
+
 void
 message_callback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                   GLchar const* message, void const* user_param )
@@ -168,12 +187,7 @@ int main( int argc, char **argv )
     // Load built-in components + systems
     // -----------------------------------------------------------------------------------------
     idk::registerComponents(ecs);
-
-    ecs.registerSystem<idk::TransformSys>();
-    ecs.registerSystem<idk::PhysicsSys>();
-    ecs.registerSystem<idk::ScriptSys>();
-    ecs.registerSystem<idk::ModelSys>();
-    ecs.registerSystem<idk::CameraSys>();
+    idk::registerSystems(ecs);
     // -----------------------------------------------------------------------------------------
 
 

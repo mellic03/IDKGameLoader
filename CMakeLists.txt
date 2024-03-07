@@ -21,10 +21,18 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 include_directories(${SDL2_INCLUDE_DIRS})
 include_directories(${SDL2_image_INCLUDE_DIRS})
 include_directories(${SDL2_mixer_INCLUDE_DIRS})
+
+
 # ---------------------------------------------------
 
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+
+target_include_directories(
+    ${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../IDKGameEngine/thirdparty/physx/include/
+)
 
 target_link_libraries(
     ${PROJECT_NAME} PUBLIC
