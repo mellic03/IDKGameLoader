@@ -20,63 +20,56 @@
 
 
 
-
-/*
-    WHAT TO DO:
-
-    1. You are making an FPS game with similar mechanics to half-life.
-        - Must implement quake style FPS camera fully in Lua.
-
-    STORY:
-        - Intro is basically the same as "Hole in The Ground".
-        - MC rushes home for the bathoom, finds a gaping hole where the toilet is supposed to be.
-          They really need to pee, so they venture into the hole in search of the toilet.
-        - Underneath the toilet is just the normal world.
-        - Sad scene occurs where the toilet is found broken, the MC anguishes upon
-          realising they will never pee again.
-
-*/
-
-
-
 void
 message_callback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                   GLchar const* message, void const* user_param )
 {
-	auto const src_str = [source]() {
+	auto const src_str = [source]()
+    {
 		switch (source)
 		{
-		case GL_DEBUG_SOURCE_API: return "API";
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW SYSTEM";
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER COMPILER";
-		case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD PARTY";
-		case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
-		case GL_DEBUG_SOURCE_OTHER: return "OTHER";
+            default:                                return "UNKNOWN";
+            case GL_DEBUG_SOURCE_API:               return "API";
+            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:     return "WINDOW SYSTEM";
+            case GL_DEBUG_SOURCE_SHADER_COMPILER:   return "SHADER COMPILER";
+            case GL_DEBUG_SOURCE_THIRD_PARTY:       return "THIRD PARTY";
+            case GL_DEBUG_SOURCE_APPLICATION:       return "APPLICATION";
+            case GL_DEBUG_SOURCE_OTHER:             return "OTHER";
 		}
 	}();
 
-	auto const type_str = [type]() {
+	auto const type_str = [type]()
+    {
 		switch (type)
 		{
-		case GL_DEBUG_TYPE_ERROR: return "ERROR";
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
-		case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
-		case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
-		case GL_DEBUG_TYPE_MARKER: return "MARKER";
-		case GL_DEBUG_TYPE_OTHER: return "OTHER";
+            default:                                return "UNKNOWN";
+            case GL_DEBUG_TYPE_ERROR:               return "ERROR";
+            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
+            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return "UNDEFINED_BEHAVIOR";
+            case GL_DEBUG_TYPE_PORTABILITY:         return "PORTABILITY";
+            case GL_DEBUG_TYPE_PERFORMANCE:         return "PERFORMANCE";
+            case GL_DEBUG_TYPE_MARKER:              return "MARKER";
+            case GL_DEBUG_TYPE_OTHER:               return "OTHER";
 		}
 	}();
 
-	auto const severity_str = [severity]() {
-		switch (severity) {
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
-		case GL_DEBUG_SEVERITY_LOW: return "LOW";
-		case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
-		case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
+	auto const severity_str = [severity]
+    {
+		switch (severity)
+        {
+            default:                                return "UNKNOWN";
+		    case GL_DEBUG_SEVERITY_NOTIFICATION:    return "NOTIFICATION";
+            case GL_DEBUG_SEVERITY_LOW:             return "LOW";
+            case GL_DEBUG_SEVERITY_MEDIUM:          return "MEDIUM";
+            case GL_DEBUG_SEVERITY_HIGH:            return "HIGH";
 		}
 	}();
-	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+
+	std::cout << src_str << ", "
+              << type_str << ", "
+              << severity_str << ", "
+              << id << ": "
+              << message << '\n';
 }
 
 
@@ -138,8 +131,6 @@ int main( int argc, char **argv )
     gl_major = table.get_int("gl-major");
     gl_minor = table.get_int("gl-minor");
 
-    // auto mh = ren.modelAllocator().loadModel("./area.idkvi");
-
 
     // Load engine code
     // // -----------------------------------------------------------------------------------------
@@ -154,7 +145,6 @@ int main( int argc, char **argv )
     auto &ren        = api.getRenderer();
     auto &threadpool = api.getThreadPool();
     // -----------------------------------------------------------------------------------------
-
 
     glDebugMessageControl(
         GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE
@@ -210,31 +200,32 @@ int main( int argc, char **argv )
     engine.initModules(api);
     ecs.init(api);
     // -----------------------------------------------------------------------------------------
-    // ecs.readFile("entry.idksc");
 
+
+
+
+    // int model_id = ren.modelAllocator().loadModel("assets/models/bathroom.idkvi");
 
     // Main loop
     // -----------------------------------------------------------------------------------------
     while (engine.running())
     {
-        // IDK_NUM_GLCALL = 0;
-
         eventsys.processKeyInput();
         eventsys.processMouseInput();
         eventsys.update();
 
-        // game->mainloop(api);
         threadpool._update();
 
         ecs.update(api);
         engine.beginFrame(api);
+
+        // auto &MA = ren.modelAllocator();
+        // MA.pushModelDraw(model_id, glm::mat4(1.0f));
+
         engine.endFrame(api);
 
-    //     std::cout << "IDK_NUM_GLCALL: " << IDK_NUM_GLCALL << "\n";
     }
     // -----------------------------------------------------------------------------------------
-
-    // ecs.writeFile("entry.idksc");
 
 
     return 0;
