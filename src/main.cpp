@@ -4,6 +4,7 @@
 #include <libidk/idk_game.hpp>
 #include <libidk/idk_string.hpp>
 #include <libidk/idk_print.hpp>
+#include <libidk/idk_log.hpp>
 
 #include <IDKGameEngine/IDKengine.hpp>
 #include <IDKECS/IDKECS.hpp>
@@ -15,6 +16,9 @@
 
 #include <IDKGameEngine/idk_engine_api.hpp>
 #include <IDKThreading/IDKThreading.hpp>
+
+#include <IDKGraphics/UI/idk_ui.hpp>
+
 
 #include <filesystem>
 
@@ -65,6 +69,8 @@ message_callback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsize
 		}
 	}();
 
+    idk::Logger::print();
+
 	std::cout << src_str << ", "
               << type_str << ", "
               << severity_str << ", "
@@ -74,76 +80,47 @@ message_callback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsize
 
 
 
-
-class idk_LuaTable
-{
-private:
-    lua_State *L;
-
-public:
-    idk_LuaTable( const std::string &path )
-    {
-        L = luaL_newstate();
-        luaL_dofile(L, path.c_str());
-        lua_getglobal(L, "Config");
-    };
-
-    ~idk_LuaTable()
-    {
-        this->close();
-    }
-
-    void close()
-    {
-        lua_close(L);
-    }
-
-    auto get_string( const std::string &name )
-    {
-        lua_pushstring(L, name.c_str());
-        lua_gettable(L, -2);
-        const char *str = lua_tostring(L, -1);
-        lua_pop(L, 1);
-
-        return str;
-    };
-
-    auto get_int( const std::string &name )
-    {
-        lua_pushstring(L, name.c_str());
-        lua_gettable(L, -2);
-        int n = lua_tointeger(L, -1);
-        lua_pop(L, 1);
-
-        return n;
-    };
-};
-
-
-
 int main( int argc, char **argv )
 {
     std::string win_name;
     int gl_major, gl_minor;
 
-    idk_LuaTable table("IDKGE/config.lua");
-    win_name = table.get_string("window-title");
-    gl_major = table.get_int("gl-major");
-    gl_minor = table.get_int("gl-minor");
+    win_name = "MEATWORLD";
+    gl_major = 4;
+    gl_minor = 6;
+
+
+    bool arg_load_modules = false;
+    bool arg_load_idksc   = false;
+    std::string arg_idksc = "";
+
+    for (int i=1; i<argc; i++)
+    {
+        std::string arg = std::string(argv[i]);
+
+        if (arg == "-lm")
+        {
+            arg_load_modules = true;
+        }
+
+        else if (arg == "-ls")
+        {
+            arg_load_idksc = true;
+            arg_idksc = argv[i+1];
+        }
+    }
 
 
     // Load engine code
     // // -----------------------------------------------------------------------------------------
-    idk::GenericLoader<idk::EngineAPI> libapi("IDKGE/runtime/libIDKGameEngine.so");
-    idk::EngineAPI &api = *libapi.getInstance();
+    idk::EngineAPI api;
     api.init(win_name, gl_major, gl_minor);
 
     auto &eventsys   = api.getEventSys();
     auto &audiosys   = api.getAudioSys();
-    auto &ecs        = api.getECS();
     auto &engine     = api.getEngine();
     auto &ren        = api.getRenderer();
-    auto &threadpool = api.getThreadPool();
+    // auto &threadpool = api.getThreadPool();
     // -----------------------------------------------------------------------------------------
 
     glDebugMessageControl(
@@ -176,56 +153,103 @@ int main( int argc, char **argv )
 
     // Load built-in components + systems
     // -----------------------------------------------------------------------------------------
-    idk::registerComponents(ecs);
-    idk::registerSystems(ecs);
+    idk::registerComponents();
+    idk::registerSystems();
     // -----------------------------------------------------------------------------------------
 
 
     // Load modules from IDKGE/runtime/modules/
     // -----------------------------------------------------------------------------------------
-    std::filesystem::directory_iterator d_iter("IDKGE/runtime/modules/");
-
-    for (auto dir: d_iter)
+    if (arg_load_modules)
     {
-        std::string name = dir.path().stem();
-        std::string path = dir.path();
+        std::filesystem::directory_iterator d_iter("IDKGE/runtime/modules/");
 
-        engine.registerModule(name, path);
+        for (auto dir: d_iter)
+        {
+            std::string name = dir.path().stem();
+            std::string path = dir.path();
+
+            engine.registerModule(name, path);
+        }
     }
     // -----------------------------------------------------------------------------------------
+
+
+    // Load game code
+    // -----------------------------------------------------------------------------------------
+    idk::GenericLoader<idk::Game> gameLoader("libgame.so");
+    idk::Game *game = gameLoader.getInstance();
+    game->registerModules(api);
+    // -----------------------------------------------------------------------------------------
+
+
+    // idk::RenderOverlay test
+    // -----------------------------------------------------------------------------------------
+    ren.pushRenderOverlayFill(glm::vec3(0.0f), 0.0f, 6.25f, 0.25f);
+    ren.pushRenderOverlay("IDKGE/resources/logo.jpg", 0.5f, 2.0f, 0.5f);
+    // -----------------------------------------------------------------------------------------
+
 
 
     // Setup
     // -----------------------------------------------------------------------------------------
+    idk::ECS2::init(api);
     engine.initModules(api);
-    ecs.init(api);
+    game->init(api);
+
+    if (arg_load_idksc == 2)
+    {
+        idk::ECS2::load(arg_idksc);
+    }
     // -----------------------------------------------------------------------------------------
 
 
-
-
-    // int model_id = ren.modelAllocator().loadModel("assets/models/bathroom.idkvi");
 
     // Main loop
     // -----------------------------------------------------------------------------------------
+    uint64_t a = SDL_GetTicks64();
+    uint64_t b = SDL_GetTicks64();
+    uint64_t delta;
+
     while (engine.running())
     {
+        a = SDL_GetTicks64();
+        delta = a - b;
+
+        float dt = float(double(delta) / 1000.0);
+              dt = glm::clamp(dt, 0.0001f, 1.0f/30.0f);
+
+        // if (dt < 1.0f / 60.0f)
+        // {
+        //     continue;
+        // }
+
+        // idkui::TextManager::text(10, 35) << "dT:  " << dt;
+        // idkui::TextManager::text(10, 60) << "FPS: " << 1.0f / dt;
+
         eventsys.processKeyInput();
         eventsys.processMouseInput();
         eventsys.update();
 
-        threadpool._update();
+        // threadpool._update();
 
-        ecs.update(api);
-        engine.beginFrame(api);
+        idk::ECS2::update(api);
 
-        // auto &MA = ren.modelAllocator();
-        // MA.pushModelDraw(model_id, glm::mat4(1.0f));
-
+        engine.beginFrame(api, dt);
+        game->mainloop(api);
         engine.endFrame(api);
 
+        idk::Logger::print();
+        b = a;
     }
     // -----------------------------------------------------------------------------------------
+
+
+    game->shutdown();
+
+    LOG_INFO() << "Main loop terminated, writing log to file";
+
+    idk::Logger::write();
 
 
     return 0;
