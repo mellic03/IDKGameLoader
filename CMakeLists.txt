@@ -28,6 +28,12 @@ include_directories(${SDL2_ttf_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+if (IDK_DEBUG)
+    target_compile_options(${PROJECT_NAME} PUBLIC -O0 -g)
+else()
+    target_compile_options(${PROJECT_NAME} PUBLIC -Ofast)
+endif ()
+
 
 target_include_directories(
     ${PROJECT_NAME} PUBLIC
